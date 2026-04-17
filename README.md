@@ -1,2 +1,2 @@
 # bundles
-Bundles: artifact buildpoint
+Bundles: artifact buildpoint & dummies

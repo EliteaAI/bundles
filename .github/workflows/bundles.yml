@@ -1,0 +1,172 @@
+name: "Bundles"
+
+on:
+  push:
+    tags: [ '*' ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        default: "main"
+        description: "Release tag"
+        required: true
+      target:
+        type: choice
+        description: "Job to run"
+        options:
+          - all
+          - deno_pyodide_sandbox
+          - prisma_binaries
+          - nltk_data_all
+          - tiktoken_encodings
+        required: true
+
+jobs:
+  deno_pyodide_sandbox:
+    name: "Bundle: deno-pyodide-sandbox"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.target == 'all' || github.event.inputs.target == 'deno_pyodide_sandbox' }}
+    steps:
+      - name: Make bundle
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ghcr.io/eliteaai/pylon:1.2.25
+          options: -v ${{ github.workspace }}:/data
+          run: |
+            cd /data
+            mkdir sandbox
+            cd sandbox
+            mkdir bin
+            curl -LOJ https://github.com/denoland/deno/releases/download/v2.5.6/deno-x86_64-unknown-linux-gnu.zip
+            unzip deno-x86_64-unknown-linux-gnu.zip
+            rm deno-x86_64-unknown-linux-gnu.zip
+            mv deno bin/deno
+            chmod a+x bin/deno
+            curl -LOJ https://github.com/pyodide/pyodide/releases/download/0.29.0/pyodide-0.29.0.tar.bz2
+            tar xf pyodide-0.29.0.tar.bz2
+            rm pyodide-0.29.0.tar.bz2
+            pip3 wheel -w pyodide dill chardet==5.2.0
+            tar czvf /data/deno-pyodide-sandbox.tar.gz .
+      #
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: ./deno-pyodide-sandbox.tar.gz
+          makeLatest: false
+          allowUpdates: true
+          name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}-bundle
+  #
+  prisma_binaries:
+    name: "Bundle: prisma-binaries"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.target == 'all' || github.event.inputs.target == 'prisma_binaries' }}
+    steps:
+      - name: Make bundle
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ghcr.io/eliteaai/pylon:1.2.25
+          options: -v ${{ github.workspace }}:/data
+          run: |
+            cd /data
+            python3 -m venv ./venv
+            ./venv/bin/pip3 install -U prisma==0.11.0
+            mkdir -p /data/litellm/prisma
+            cd /data/litellm
+            curl -LOJ https://raw.githubusercontent.com/BerriAI/litellm/f4ecf3ca725d4e0283756c545b07c8bfa5825788/litellm/proxy/schema.prisma
+            cd /data
+            env PRISMA_HOME_DIR=/data/litellm/prisma PRISMA_NODEENV_CACHE_DIR=/data/litellm/prisma/.cache/prisma-python/nodeenv HOME=/data/litellm/prisma PATH=/data/venv/bin:$PATH ./venv/bin/prisma generate --schema /data/litellm/schema.prisma
+            env PRISMA_HOME_DIR=/data/litellm/prisma PRISMA_NODEENV_CACHE_DIR=/data/litellm/prisma/.cache/prisma-python/nodeenv HOME=/data/litellm/prisma PATH=/data/venv/bin:$PATH ./venv/bin/prisma version
+            cd /data/litellm/prisma
+            tar czvf /data/prisma-binaries.tar.gz .
+      #
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: ./prisma-binaries.tar.gz
+          makeLatest: false
+          allowUpdates: true
+          name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}-bundle
+  #
+  nltk_data_all:
+    name: "Bundle: nltk-data-all"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.target == 'all' || github.event.inputs.target == 'nltk_data_all' }}
+    steps:
+      - name: Prepare data
+        run: |
+          cat << EOF > download.py
+          import sys
+          target = sys.argv[1]
+          #
+          import os
+          os.makedirs(target, exist_ok=True)
+          #
+          import nltk
+          import nltk.downloader
+          nltk.downloader._downloader._download_dir = target
+          nltk.data.path = [target]
+          nltk.download("all", download_dir=target)
+          EOF
+      #
+      - name: Make bundle
+        uses: addnab/docker-run-action@v3
+        with:
+          image: python:3.12
+          options: -v ${{ github.workspace }}:/data
+          run: |
+            python3 -m venv ./venv
+            ./venv/bin/pip3 install -U nltk==3.9.1
+            ./venv/bin/python3 /data/download.py /data/target
+            cd /data/target
+            tar czvf ../nltk-data-all.tar.gz .
+      #
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: ./nltk-data-all.tar.gz
+          makeLatest: false
+          allowUpdates: true
+          name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}-bundle
+  #
+  tiktoken_encodings:
+    name: "Bundle: tiktoken-encodings"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.target == 'all' || github.event.inputs.target == 'tiktoken_encodings' }}
+    steps:
+      - name: Prepare data
+        run: |
+          cat << EOF > download.py
+          import sys
+          target = sys.argv[1]
+          #
+          import os
+          os.makedirs(target, exist_ok=True)
+          os.environ["TIKTOKEN_CACHE_DIR"] = target
+          #
+          import tiktoken
+          for encoding in tiktoken.list_encoding_names():
+              tiktoken.get_encoding(encoding)
+          EOF
+      #
+      - name: Make bundle
+        uses: addnab/docker-run-action@v3
+        with:
+          image: python:3.12
+          options: -v ${{ github.workspace }}:/data
+          run: |
+            python3 -m venv ./venv
+            ./venv/bin/pip3 install -U tiktoken==0.9.0
+            ./venv/bin/python3 /data/download.py /data/target
+            cd /data/target
+            tar czvf ../tiktoken-encodings.tar.gz .
+      #
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: ./tiktoken-encodings.tar.gz
+          makeLatest: false
+          allowUpdates: true
+          name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}-bundle
