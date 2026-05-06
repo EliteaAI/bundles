@@ -106,7 +106,8 @@ jobs:
           import nltk.downloader
           nltk.downloader._downloader._download_dir = target
           nltk.data.path = [target]
-          nltk.download("all", download_dir=target)
+          nltk.download("punkt_tab", download_dir=target)
+          nltk.download("averaged_perceptron_tagger_eng", download_dir=target)
           EOF
       #
       - name: Make bundle
