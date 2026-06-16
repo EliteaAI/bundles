@@ -72,7 +72,7 @@ jobs:
             ./venv/bin/pip3 install -U prisma==0.11.0
             mkdir -p /data/litellm/prisma
             cd /data/litellm
-            curl -LOJ https://raw.githubusercontent.com/BerriAI/litellm/f4ecf3ca725d4e0283756c545b07c8bfa5825788/litellm/proxy/schema.prisma
+            curl -LOJ https://raw.githubusercontent.com/BerriAI/litellm/cd340909219a0b9cba8e61092ad5da13687d61e2/litellm/proxy/schema.prisma
             cd /data
             env PRISMA_HOME_DIR=/data/litellm/prisma PRISMA_NODEENV_CACHE_DIR=/data/litellm/prisma/.cache/prisma-python/nodeenv HOME=/data/litellm/prisma PATH=/data/venv/bin:$PATH ./venv/bin/prisma generate --schema /data/litellm/schema.prisma
             env PRISMA_HOME_DIR=/data/litellm/prisma PRISMA_NODEENV_CACHE_DIR=/data/litellm/prisma/.cache/prisma-python/nodeenv HOME=/data/litellm/prisma PATH=/data/venv/bin:$PATH ./venv/bin/prisma version
