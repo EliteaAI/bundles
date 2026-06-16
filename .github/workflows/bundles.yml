@@ -41,9 +41,9 @@ jobs:
             rm deno-x86_64-unknown-linux-gnu.zip
             mv deno bin/deno
             chmod a+x bin/deno
-            curl -LOJ https://github.com/pyodide/pyodide/releases/download/0.29.0/pyodide-0.29.0.tar.bz2
-            tar xf pyodide-0.29.0.tar.bz2
-            rm pyodide-0.29.0.tar.bz2
+            curl -LOJ https://github.com/pyodide/pyodide/releases/download/0.29.3/pyodide-0.29.3.tar.bz2
+            tar xf pyodide-0.29.3.tar.bz2
+            rm pyodide-0.29.3.tar.bz2
             pip3 wheel -w pyodide dill chardet==5.2.0
             tar czvf /data/deno-pyodide-sandbox.tar.gz .
       #
