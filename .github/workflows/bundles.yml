@@ -19,6 +19,9 @@ on:
           - nltk_data_all
           - tiktoken_encodings
         required: true
+  
+permissions:
+  contents: write
 
 jobs:
   deno_pyodide_sandbox:
