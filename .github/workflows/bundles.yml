@@ -32,7 +32,7 @@ jobs:
       - name: Make bundle
         uses: addnab/docker-run-action@v3
         with:
-          image: ghcr.io/eliteaai/pylon:1.2.25
+          image: ghcr.io/eliteaai/pylon:1.2.31
           options: -v ${{ github.workspace }}:/data
           run: |
             cd /data
@@ -67,7 +67,7 @@ jobs:
       - name: Make bundle
         uses: addnab/docker-run-action@v3
         with:
-          image: ghcr.io/eliteaai/pylon:1.2.25
+          image: ghcr.io/eliteaai/pylon:1.2.31
           options: -v ${{ github.workspace }}:/data
           run: |
             cd /data
